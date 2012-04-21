@@ -1,0 +1,98 @@
+just prior to the jump to memcpy 1
+  9d001730   jal   0x9d004cd4
+with
+  v0  a0000ca0
+  v1  a0000ca0
+  sp  a0001e70
+  a0  a0000740  dest
+  a1  a0000ca0  from
+  a2  00000200  len
+
+==> go
+  
+just prior to the jump to memcpy 2
+  9d001730   jal   0x9d004cd4
+with
+  v0  a0000ca0
+  v1  a0000ca0
+  sp  a0001e70
+  a0  a0000940  dest
+  a1  a0000ca0  from
+  a2  00000200  len
+  
+==> go
+  
+just prior to the jump to memcpy 3
+  9d001730   jal   0x9d004cd4
+with
+  v0  a0000ca0
+  v1  a0000ca0
+  sp  a0001e70
+  a0  a0000740  dest
+  a1  a0000ca0  from
+  a2  00000200  len
+
+==> go
+
+                          LOST IN SPACE! Didn't apparently go anywhere!
+                           
+==> step into
+
+                          Straight to general exception handler
+                          with exception code 0080101c
+                            which means:
+                              BD branch delay - no
+                              TI timer interrupt - no
+                              CE coprocessor exception bits 00
+                              DC disable count 0
+                              IV interrupt vector bit 1 (use the special interrupt vector (16#200)
+                              RIPL requested interrupt priority level 04
+                              IP interrupt requested 0
+                              EXCCODE 7 = Bus error exception (data reference: load or store)
+                          and address 9d004dc4 (cached flash + 4dc4)
+                          
+In the interrupt service routine at 9d002074, we have just loaded OC1RS with 0xFFFFFF9E, 
+which should be 30 + ( *BPtr & ACfg.fix ). Now BPtr is a000076d, mapped to 0000076d (I think!)
+and note that IT IS AN ODD BYTE ADDRESS!!!
+A000076c contains 04020000; A0000770 contains 0bf70800.
+Backtracking, we should see v1 (ffffff9e) stored at 12320(v0); v0 is bf800000, so bf803020
+is memory mapped into the special function registers (specifically OC1RS).
+We have loaded v0 with a word from -32704(gp), presumably BPtr, then loaded v0 with an 
+unsigned byte from 0(v0) (the byte is 00). Then we move that to v1, load v0 with a byte from
+-32707(gp) which is a000026d, or ACfg.fix, whose value is 80. 
+Then we xor v0 and v1, add 30 to v0, move it to v1, and store v1 in OC1RS.
+
+                          
+Hit go, so now are ready to load new samples...
+BPtr is now a000076f
+*BPtr is still 00
+lw v0, ... now a000076f
+lbu v0, 0(v0) ... now 04. Hmm... at a000076c is 04020000. Oh, looks like the memory mapper reverses the bytes...
+addu v1,v0,zero moves the value into v1
+lb v0, -32707(gp) should get fix. v0 is now ffffff80. The sign has been extended!
+
+... fix needs to be declared as unsigned!!!
+
+Now it is. So we start again -- since the problem didn't disappear...
+BPtr is now a000098b; it points to a c2
+
+A few steps later, we see PWM happening on the appropriate pin; falling edge at 12us, next rising edge at 22.64us, 
+freq measured at 44.1kHz. Now PR2 is b4, which is 180; 180 cycles of 40MHz is 180/40e6 = 4.5e-6 = 4.5us. Huh?
+PR2 should be FPB / bitrate - 1. FPB is currently defined as 8e6; but the oscillator is 8MHz FRC, 
+and the PLL is used to divide by 4 and multiply by 20 to get 40MHz; FPBDIV is divide-by-1.
+
+Note that after FPLLIDIV the requirement is 4-5MHz input!! So cannot divide 8MHz by 4 --> divide by 2 instead, 
+then multiply by 20 and set FPLLODIV to 2? And then set FNOSC to FRCPLL
+
+Having changed these settings and properly set FCY and FPB (40MHz and 5MHz respectively), ran and still blew up.
+Now at 9d004dc4, with exception 7 (DBE, data bus error (load/store)).
+
+OK. Now stepping through the memcpy setup.
+lw v0, 48(s8) gets the contents of fp (address of *fp) (a0000ea8)
+lw v1, 4(v0) gets the contents of (*fp).buffer (a0000ca0)
+lw v0, 48(s8) gets again a0000ea8
+lhu v0, 14(v0) gets the contents of (*fp).pos (0000)
+
+shit. stepped in c rather than assembly, got to next c statement!
+
+OK. Now got some WAV files from Wikipedia, and it now (finally!) plays the 8-bit ones. Not the 16-bit ones, though.
