@@ -32,7 +32,7 @@
 #define BTN                   _RB7
 #define BTN_TRIS              _TRISB7
 
-// #define UART2_SFR            RPxx
+// #define UART2_SFR             RPxx
 #define UART2_RX_PPS_REG      U2RXRbits.U2RXR
 #define UART2_RX_PPS_ITM      0x03
 // #define UART2_SDO_TRIS        _TRISxx
