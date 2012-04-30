@@ -1,7 +1,7 @@
 /*
 ** SONUS32_pin_assignments.h   M5 SONUS32 project 
 ** 
-** 2012-04-15 v0.3 cbm
+** 2012-04-27 v0.4 cbm
 **
 
  * A0  (02) SPI1/I2S SS1 DAC
@@ -23,10 +23,13 @@
  * B13 (24) REFOCLK (MCLK) DAC
  * B14 (25) SPI1/I2S SCK1 DAC
  * B15 (26) SPI2 SCK2 SD card
+ 
+ Change history:
+  2012-04-27 v0.4 cbm Changed _RA0 to _LATA0, etc.
 
 */
 
-#define LED                   _RB5
+#define LED                   _LATB5
 #define LED_TRIS              _TRISB5
 
 #define BTN                   _RB7
@@ -53,11 +56,11 @@
 // SCK2 is on pin 26 -- hardwired for SDI2
 // Write Protect input is pin 11 = RPB4
 //TODO: normalize things like RB4 and _RB4
-#define SDWP                  _RB4
+#define SDWP                  _LATB4
 // Card Detect input is pin 6 = RPB2
-#define SDCD                  _RB2
+#define SDCD                  _LATB2
 // Card Select output is pin 7 = RPB3
-#define SDCS                  _RB3
+#define SDCS                  _LATB3
 #define SDCS_TRIS             _TRISB3
 
 //*  ** For DAC using SPI1:
@@ -96,11 +99,11 @@
 
 /*  ** For PWM output:
 
-  #define CHAN1               _RA0
+  #define CHAN1               _LATA0
   #define CHAN1_PPS_REG       RPA0Rbits.RPA0R
   #define CHAN1_PPS_ITM       0x05
   
-  #define CHAN2               _RA1
+  #define CHAN2               _LATA1
   #define CHAN2_PPS_REG       RPA1Rbits.RPA1R
   #define CHAN2_PPS_ITM       0x05
 */
